@@ -1,6 +1,7 @@
 import os
 import json
-import tempfile
+import glob
+#import tempfile
 import gradio as gr
 import warnings
 
@@ -108,6 +109,10 @@ def gr_navigate(direction, data, index, curr_origin, curr_transcription, curr_ty
 def gr_save_json(data, original_file="tmp.json"):
     if not data:
         raise gr.Error("Нет данных для сохранения")
+    
+    files = glob.glob(str(TEMP_DIR / "*.json"))
+    for file in files:
+        os.remove(file)
     
     base_name = Path(original_file).stem
     curr_time = datetime.now().strftime(format="%d-%m-%Y-%H-%M-%S")
