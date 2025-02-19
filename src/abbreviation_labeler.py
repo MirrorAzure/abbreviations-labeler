@@ -4,6 +4,8 @@ import tempfile
 import gradio as gr
 import warnings
 
+from datetime import datetime
+from pathlib import Path
 from playsound3 import playsound
 from constants import SAMPLE_RATE, MODEL_DIR, DATA_DIR, TEMP_DIR, SILERO_SPEAKERS, TERA_SPEAKERS, VOSK_SPEAKERS
 from torch_setup import torch_init
@@ -51,6 +53,7 @@ def vosk_tts(phrase: str, speaker: str="0"):
 
 
 def gr_load_json(file):
+    original_name = Path(file.name).absolute()
     try:
         with open(file.name, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -71,7 +74,8 @@ def gr_load_json(file):
             first_entry["origin"], 
             first_entry["transcription"], 
             first_entry["type"], 
-            f"1/{len(data)}"
+            f"1/{len(data)}",
+            original_name
         )
     except Exception as e:
         raise gr.Error(f"Ошибка загрузки файла: {str(e)}")
@@ -101,14 +105,18 @@ def gr_navigate(direction, data, index, curr_origin, curr_transcription, curr_ty
     )
 
 
-def gr_save_json(data):
+def gr_save_json(data, original_file="tmp.json"):
     if not data:
         raise gr.Error("Нет данных для сохранения")
     
-    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as file_wrapper:
-        with open(file_wrapper.name, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-    return file_wrapper.name
+    base_name = Path(original_file).stem
+    curr_time = datetime.now().strftime(format="%d-%m-%Y-%H-%M-%S")
+    save_name = f"{base_name}_{curr_time}.json"
+    save_path = TEMP_DIR / save_name
+    
+    with open(save_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    return str(save_path.absolute())
 
 
 def gr_update_data(data, index, transcription, type_val):
@@ -138,6 +146,7 @@ with gr.Blocks(title="Audio Labeler") as demo:
     
     data_state = gr.State()
     index_state = gr.State()
+    file_state = gr.State(value="tmp.json")
     
     with gr.Row():
         upload_btn = gr.UploadButton("Загрузить JSON файл", file_types=[".json"])
@@ -209,7 +218,7 @@ with gr.Blocks(title="Audio Labeler") as demo:
     upload_btn.upload(
         gr_load_json,
         inputs=[upload_btn],
-        outputs=[data_state, index_state, origin_display, transcription_input, type_radio, index_display]
+        outputs=[data_state, index_state, origin_display, transcription_input, type_radio, index_display, file_state]
     )
     
     prev_btn.click(
@@ -254,7 +263,7 @@ with gr.Blocks(title="Audio Labeler") as demo:
     
     save_btn.click(
         gr_save_json,
-        inputs=[data_state],
+        inputs=[data_state, file_state],
         outputs=[download]
     )
     
