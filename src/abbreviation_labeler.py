@@ -70,7 +70,7 @@ def gr_load_json(file):
             if len(transcription) == 0 and not index_changed:
                 index_changed = True
                 first_index = idx
-                gr.Info("Открыт последний неразмеченный элемент")
+                gr.Info("Открыт первый неразмеченный элемент")
             if not isinstance(item, dict):
                 raise gr.Error("Все элементы списка должны быть словарями")
             if not all(key in item for key in ["origin", "transcription", "type"]):
