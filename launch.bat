@@ -15,7 +15,7 @@ if not %errorlevel% equ 0 (
 if not exist ".venv\" (
     echo Virtual environment .venv not found.
     echo Installing virtual envitonment...
-
+    python -m venv .venv
 )
 if exist ".venv\" (
     echo Virtual environment .venv found.
