@@ -62,20 +62,31 @@ def gr_load_json(file):
         if not isinstance(data, list):
             raise gr.Error("JSON должен быть списком словарей")
         
-        for item in data:
+        first_index = 0
+        index_changed = False
+        
+        for idx, item in enumerate(data):
+            transcription = item.get("transcription", "")
+            if len(transcription) == 0 and not index_changed:
+                index_changed = True
+                first_index = idx
+                gr.Info("Открыт последний неразмеченный элемент")
             if not isinstance(item, dict):
                 raise gr.Error("Все элементы списка должны быть словарями")
             if not all(key in item for key in ["origin", "transcription", "type"]):
                 raise gr.Error("Каждая запись должна содержать поля origin, transcription и type")
-                
-        first_entry = data[0]
+        
+        if not index_changed:
+            gr.Info("Все элементы размечены. Открыт первый элемент")
+            
+        first_entry = data[first_index]
         return (
             data, 
-            0, 
+            first_index, 
             first_entry["origin"], 
             first_entry["transcription"], 
             first_entry["type"], 
-            f"1/{len(data)}",
+            f"{first_index+1}/{len(data)}",
             original_name
         )
     except Exception as e:
