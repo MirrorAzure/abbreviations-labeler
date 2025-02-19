@@ -26,27 +26,28 @@ vosk_synth = vosk_init()
 def tera_tts(phrase: str, speaker: str=""):
     if len(phrase.strip()) == 0:
         raise gr.Error("Пустая строка")
-    with tempfile.NamedTemporaryFile(dir=TEMP_DIR, prefix="tera_tts", suffix=".wav", delete=False) as temp_file:
-        audio = tera_model(phrase, lenght_scale=1.1)
-        tera_model.save_wav(audio, temp_file.name)
-        playsound(temp_file.name)
+    audio_file_name = TEMP_DIR / "tera_tts.wav"
+    audio = tera_model(phrase, lenght_scale=1.1)
+    tera_model.save_wav(audio, str(audio_file_name))
+    playsound(audio_file_name.absolute())
 
 def silero(phrase: str, speaker: str="baya"):
     if len(phrase.strip()) == 0:
         raise gr.Error("Пустая строка")
-    with tempfile.NamedTemporaryFile(dir=TEMP_DIR, prefix="silero", suffix=".wav", delete=False) as temp_file:
-        audio_path = silero_model.save_wav(text=phrase,
-                                                audio_path=str(temp_file.name),
-                                                speaker=speaker,
-                                                sample_rate=SAMPLE_RATE)
-        playsound(audio_path)
+    audio_file_name = TEMP_DIR / "silero.wav"
+    silero_model.save_wav(text=phrase,
+                            audio_path=str(audio_file_name),
+                            speaker=speaker,
+                            sample_rate=SAMPLE_RATE)
+    playsound(audio_file_name.absolute())
 
 def vosk_tts(phrase: str, speaker: str="0"):
     if len(phrase.strip()) == 0:
         raise gr.Error("Пустая строка")
-    with tempfile.NamedTemporaryFile(dir=TEMP_DIR, prefix="vosk_tts", suffix=".wav", delete=False) as temp_file:
-        vosk_synth.synth(phrase, temp_file.name, speaker_id=speaker)
-        playsound(temp_file.name)
+    audio_file_name = TEMP_DIR / "vosk_tts.wav"
+    #with tempfile.NamedTemporaryFile(dir=TEMP_DIR, prefix="vosk_tts", suffix=".wav", delete=False) as temp_file:
+    vosk_synth.synth(phrase, str(audio_file_name), speaker_id=speaker)
+    playsound(audio_file_name.absolute())
 
 
 def gr_load_json(file):
