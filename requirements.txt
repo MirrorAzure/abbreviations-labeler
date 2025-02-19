@@ -1,0 +1,5 @@
+gradio==5.16.0
+torch==2.6.0
+TeraTTS==1.0
+vosk_tts==0.3.56
+playsound3==2.5.2
