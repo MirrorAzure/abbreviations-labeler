@@ -166,13 +166,7 @@ with gr.Blocks(title="Audio Labeler") as demo:
     
     with gr.Row():
         upload_btn = gr.UploadButton("Загрузить JSON файл", file_types=[".json"])
-        
-    
-    index_display = gr.Textbox(label="Текущая запись", interactive=False)
-    
-    with gr.Row():
-        prev_btn = gr.Button("← Назад")
-        next_btn = gr.Button("Вперед →")
+
     
     origin_display = gr.Textbox(label="Origin", interactive=False)
     transcription_input = gr.Textbox(label="Transcription")
@@ -208,8 +202,14 @@ with gr.Blocks(title="Audio Labeler") as demo:
             )
             vosk_play_btn = gr.Button("Воспроизвести")
 
+    index_display = gr.Textbox(label="Текущая запись", interactive=False)
     
-    save_btn = gr.Button("Сохранить изменения")
+    with gr.Row():
+        prev_btn = gr.Button("← Назад")
+        next_btn = gr.Button("Вперед →")
+
+    
+    save_btn = gr.Button("Записать в файл")
     
     download = gr.File(label="Скачать измененный файл")
 
