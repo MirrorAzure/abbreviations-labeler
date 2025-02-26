@@ -142,13 +142,14 @@ def gr_navigate(direction, data, index, curr_origin, curr_transcription, curr_ty
     if new_index < 0 or new_index >= len(data):
         return data, index, curr_origin, curr_transcription, curr_type, f"{index+1}/{len(data)}"
     
-    
-    
-    if len(data[new_index]["transcription"]) == 0:
-        data[new_index]["transcription"] = get_transcription(data[new_index]["origin"], type="abbreviation")
-    
+    if check_for_sound_abbreviation(data[new_index]["origin"]):
+        data[new_index]["type"] = "Звуковая аббревиатура"
+        
     if data[new_index]["type"] not in abbreviation_types:
         data[new_index]["type"] = abbreviation_types[0]
+
+    if len(data[new_index]["transcription"]) == 0:
+        data[new_index]["transcription"] = get_transcription(data[new_index]["origin"], type=data[new_index]["type"])
     
     next_entry = data[new_index]
     return (
