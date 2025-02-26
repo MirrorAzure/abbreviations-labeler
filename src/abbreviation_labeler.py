@@ -75,7 +75,7 @@ def get_transcription(text: str, type: str="Буквенная аббревиа�
 def check_for_sound_abbreviation(text: str) -> bool:
     if len(text.strip()) == 0:
         raise gr.Error("Пустая строка")
-    is_sound = bool(sound_abbreviation_pattern.match(text.lower()))
+    is_sound = bool(sound_abbreviation_pattern.findall(text.lower()))
     return is_sound
 
 
