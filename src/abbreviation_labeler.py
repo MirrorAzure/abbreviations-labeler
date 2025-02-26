@@ -27,6 +27,8 @@ silero_model = silero_init()
 tera_model = tera_init()
 vosk_synth = vosk_init()
 
+abbreviation_types = ["Буквенная аббревиатура", "Буквенно-звуковая аббревиатура", "Звуковая аббревиатура", "Другое", "Пропуск"]
+
 def tera_tts(phrase: str, speaker: str=""):
     if len(phrase.strip()) == 0:
         raise gr.Error("Пустая строка")
@@ -89,6 +91,9 @@ def gr_load_json(file):
         if len(data[first_index]["transcription"]) == 0:
             data[first_index]["transcription"] = get_transcription(data[first_index]["origin"])
         
+        if data[first_index]["type"] not in abbreviation_types:
+            data[first_index]["type"] = abbreviation_types[0]
+        
         first_entry = data[first_index]
         
         return (
@@ -119,6 +124,9 @@ def gr_navigate(direction, data, index, curr_origin, curr_transcription, curr_ty
     
     if len(data[new_index]["transcription"]) == 0:
         data[new_index]["transcription"] = get_transcription(data[new_index]["origin"])
+    
+    if data[new_index]["type"] not in abbreviation_types:
+        data[new_index]["type"] = abbreviation_types[0]
     
     next_entry = data[new_index]
     return (
@@ -185,9 +193,9 @@ with gr.Blocks(title="Audio Labeler") as demo:
     origin_display = gr.Textbox(label="Origin", interactive=False)
     transcription_input = gr.Textbox(label="Transcription")
     type_radio = gr.Radio(
-        ["Аббревиатура", "Акроним", "Другое"], 
+        abbreviation_types, 
         label="Type", 
-        value="Аббревиатура"
+        value=abbreviation_types[0]
     )
     
     with gr.Row():
