@@ -12,6 +12,7 @@ from constants import SAMPLE_RATE, MODEL_DIR, DATA_DIR, TEMP_DIR, SILERO_SPEAKER
 from torch_setup import torch_init
 from tts_models import silero_init, tera_init, vosk_init
 from utils import create_dir_if_not_exists
+from alphabets import alphabets
 
 create_dir_if_not_exists(MODEL_DIR)
 create_dir_if_not_exists(DATA_DIR)
@@ -52,6 +53,11 @@ def vosk_tts(phrase: str, speaker: str="0"):
     vosk_synth.synth(phrase, str(audio_file_name), speaker_id=speaker)
     playsound(audio_file_name.absolute())
 
+def get_transcription(text: str) -> str:
+    if len(text.strip()) == 0:
+        raise gr.Error("Пустая строка")
+    return ' '.join([alphabets.get(symbol, "") for symbol in text.upper()])
+
 
 def gr_load_json(file):
     original_name = Path(file.name).absolute()
@@ -79,7 +85,12 @@ def gr_load_json(file):
         if not index_changed:
             gr.Info("Все элементы размечены. Открыт первый элемент")
             
+        
+        if len(data[first_index]["transcription"]) == 0:
+            data[first_index]["transcription"] = get_transcription(data[first_index]["origin"])
+        
         first_entry = data[first_index]
+        
         return (
             data, 
             first_index, 
@@ -105,6 +116,9 @@ def gr_navigate(direction, data, index, curr_origin, curr_transcription, curr_ty
     new_index = index + direction
     if new_index < 0 or new_index >= len(data):
         return data, index, curr_origin, curr_transcription, curr_type, f"{index+1}/{len(data)}"
+    
+    if len(data[new_index]["transcription"]) == 0:
+        data[new_index]["transcription"] = get_transcription(data[new_index]["origin"])
     
     next_entry = data[new_index]
     return (
