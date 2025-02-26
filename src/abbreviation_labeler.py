@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import glob
 #import tempfile
@@ -29,6 +30,8 @@ vosk_synth = vosk_init()
 
 abbreviation_types = ["Буквенная аббревиатура", "Звуковая аббревиатура", "Буквенно-звуковая аббревиатура", "Другое", "Пропуск"]
 
+sound_abbreviation_pattern = re.compile(r"[бвгджзйклмнпрстфхцчшщ][аеёиоуыэюя][бвгджзйклмнпрстфхцчшщ]")
+
 def tera_tts(phrase: str, speaker: str=""):
     if len(phrase.strip()) == 0:
         raise gr.Error("Пустая строка")
@@ -55,10 +58,25 @@ def vosk_tts(phrase: str, speaker: str="0"):
     vosk_synth.synth(phrase, str(audio_file_name), speaker_id=speaker)
     playsound(audio_file_name.absolute())
 
-def get_transcription(text: str) -> str:
+def get_transcription(text: str, type: str="Буквенная аббревиатура") -> str:
     if len(text.strip()) == 0:
         raise gr.Error("Пустая строка")
-    return ' '.join([alphabets.get(symbol, "") for symbol in text.upper()])
+    if type == "Буквенная аббревиатура":
+        transcription = ' '.join([alphabets.get(symbol, "") for symbol in text.upper()])
+        gr.Info(f"Для буквенной аббревиатуры была определена транскрипция: {transcription}")
+    elif type == "Звуковая аббревиатура":
+        transcription = text.lower()
+        gr.Info(f"Для звуковой аббревиатуры была определена транскрипция: {transcription}")
+    else:
+        transcription = text
+        gr.Info("Тип аббревиатуры не был определён. Транскрипция задана по умолчанию.")
+    return transcription
+
+def check_for_sound_abbreviation(text: str) -> bool:
+    if len(text.strip()) == 0:
+        raise gr.Error("Пустая строка")
+    is_sound = bool(sound_abbreviation_pattern.match(text.lower()))
+    return is_sound
 
 
 def gr_load_json(file):
@@ -86,13 +104,15 @@ def gr_load_json(file):
         
         if not index_changed:
             gr.Info("Все элементы размечены. Открыт первый элемент")
-            
         
-        if len(data[first_index]["transcription"]) == 0:
-            data[first_index]["transcription"] = get_transcription(data[first_index]["origin"])
+        if check_for_sound_abbreviation(data[first_index]["origin"]):
+            data[first_index]["type"] = "Звуковая аббревиатура"
         
         if data[first_index]["type"] not in abbreviation_types:
-            data[first_index]["type"] = abbreviation_types[0]
+            data[first_index]["type"] = abbreviation_types[0]    
+        
+        if len(data[first_index]["transcription"]) == 0:
+            data[first_index]["transcription"] = get_transcription(data[first_index]["origin"], type=data[first_index]["type"])
         
         first_entry = data[first_index]
         
@@ -122,8 +142,10 @@ def gr_navigate(direction, data, index, curr_origin, curr_transcription, curr_ty
     if new_index < 0 or new_index >= len(data):
         return data, index, curr_origin, curr_transcription, curr_type, f"{index+1}/{len(data)}"
     
+    
+    
     if len(data[new_index]["transcription"]) == 0:
-        data[new_index]["transcription"] = get_transcription(data[new_index]["origin"])
+        data[new_index]["transcription"] = get_transcription(data[new_index]["origin"], type="abbreviation")
     
     if data[new_index]["type"] not in abbreviation_types:
         data[new_index]["type"] = abbreviation_types[0]
@@ -171,10 +193,12 @@ with gr.Blocks(title="Audio Labeler") as demo:
     gr.Markdown("## Разметчик сокращений")
     with gr.Column():
         with gr.Accordion("Инструкция", open=False):
-            gr.Markdown("""1. Загрузите JSON-файл с аббревиатурами
+            gr.Markdown("""
+                        1. Загрузите JSON-файл с аббревиатурами
                         2. Для каждой записи (Origin) введите правильное произношение (Transcription) и класс (Type)
                         3. Проверьте правильность произношения в TTS-системах
-                        4. Сохраните готовый файл""")
+                        4. Сохраните готовый файл
+                        """)
         with gr.Accordion("Примечания", open=False):
             gr.Markdown("""
                         - Для обозначения ударения используйте символ '+'. Например: св+ёкла
