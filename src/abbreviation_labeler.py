@@ -31,6 +31,7 @@ vosk_synth = vosk_init()
 abbreviation_types = ["Буквенная аббревиатура", "Звуковая аббревиатура", "Буквенно-звуковая аббревиатура", "Другое", "Пропуск"]
 
 sound_abbreviation_pattern = re.compile(r"[бвгджзйклмнпрстфхцчшщ][аеёиоуыэюя][бвгджзйклмнпрстфхцчшщ]")
+file_name_pattern = re.compile(r"(?P<original_name>.+?)(?:_(?:\d+-)+\d+)?\.json")
 
 def tera_tts(phrase: str, speaker: str=""):
     if len(phrase.strip()) == 0:
@@ -162,7 +163,7 @@ def gr_navigate(direction, data, index, curr_origin, curr_transcription, curr_ty
     )
 
 
-def gr_save_json(data, original_file="tmp.json"):
+def gr_save_json(data, original_file: Path):
     if not data:
         raise gr.Error("Нет данных для сохранения")
     
@@ -170,7 +171,7 @@ def gr_save_json(data, original_file="tmp.json"):
     for file in files:
         os.remove(file)
     
-    base_name = Path(original_file).stem
+    base_name = file_name_pattern.search(original_file.name).group("original_name")
     curr_time = datetime.now().strftime(format="%d-%m-%Y-%H-%M-%S")
     save_name = f"{base_name}_{curr_time}.json"
     save_path = TEMP_DIR / save_name
@@ -212,7 +213,7 @@ with gr.Blocks(title="Audio Labeler") as demo:
     
     data_state = gr.State()
     index_state = gr.State()
-    file_state = gr.State(value="tmp.json")
+    file_state = gr.State(value=Path("tmp.json"))
     
     with gr.Row():
         upload_btn = gr.UploadButton("Загрузить JSON файл", file_types=[".json"])
